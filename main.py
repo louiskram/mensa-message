@@ -29,7 +29,7 @@ newest_post_date = str(datetime_object.date())
 rating = ""
 if newest_post_date == today:
     # rating can be a float
-    rating = re.search("(\d|\d\.\d+)\/10", newest_post_metadata).group()
+    rating = re.search("(\d|\d(\.|,)\d+)\/10", newest_post_metadata).group()
 
     # pk is the only number exactly 19 characters long
     media_pk = re.search("\d{19}", newest_post_metadata).group()
