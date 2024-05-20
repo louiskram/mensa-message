@@ -11,7 +11,7 @@ from datetime import datetime
 from login_user import login_user
 import config
 
-today = "2024-05-17" #datetime.today().strftime('%Y-%m-%d')
+today = datetime.today().strftime('%Y-%m-%d')
 
 # get mensa data
 api_url = f"https://openmensa.org/api/v2/canteens/279/days/{today}/meals"
