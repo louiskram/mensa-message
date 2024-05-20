@@ -1,4 +1,5 @@
 import logging
+import os
 from instagrapi import Client
 from instagrapi.exceptions import LoginRequired
 
@@ -11,8 +12,11 @@ def login_user(cl: Client, username: str, password: str):
     or the provided username and password.
     """
 
+    script_directory = os.path.dirname(os.path.abspath(__file__))
+    filename = "session.json"
+    full_path = os.path.join(script_directory, filename)
 
-    session = cl.load_settings("session.json")
+    session = cl.load_settings(full_path)
 
     login_via_session = False
     login_via_pw = False
