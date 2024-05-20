@@ -1,0 +1,7 @@
+{
+    "username": "ACCOUNT",
+    "password": "PASSWORD",
+    "send_phone_no": "the registered signal number, that sends the information",
+    "rec_group_id": "the ID (not internal ID) of the group",
+    "signal_api_ip": "http://localhost:8080"
+}

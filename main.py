@@ -9,7 +9,13 @@ import requests
 from datetime import datetime
 
 from login_user import login_user
-import config
+
+
+script_directory = os.path.dirname(os.path.abspath(__file__))
+filename = "config.json"
+full_path = os.path.join(script_directory, filename)
+with open(full_path, 'r') as file:
+    config = json.load(file)
 
 today = datetime.today().strftime('%Y-%m-%d')
 
@@ -29,7 +35,7 @@ if response.status_code == 200:
 
 # grab Instagram data
 cl = Client()
-login_user(cl, config.username, config.username)
+login_user(cl, config['username'], config['password'])
 
 user_id = 55356066885 # cl.user_id_from_username("mensa.out.of.10")
 
@@ -67,8 +73,8 @@ if today == newest_post_date:
 
 headers = {'Content-Type': 'application/json'}
 data = {
-    'number': config.send_phone_no,
-    'recipients': [config.rec_group_id],
+    'number': config['send_phone_no'],
+    'recipients': [config['rec_group_id']],
 }
 
 if rating:
@@ -78,7 +84,7 @@ else:
     data['message'] = meal
 
 if meal: 
-    response = requests.post(f"{config.signal_api_ip}/v2/send", headers=headers, data=json.dumps(data))
+    response = requests.post(f"{config['signal_api_ip']}/v2/send", headers=headers, data=json.dumps(data))
     print(response)
 
 # delete image
