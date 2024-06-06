@@ -9,7 +9,8 @@ import requests
 from datetime import datetime
 
 from login_user import login_user
-
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 script_directory = os.path.dirname(os.path.abspath(__file__))
 filename = "config.json"
@@ -21,7 +22,14 @@ today = datetime.today().strftime('%Y-%m-%d')
 
 # get mensa data
 api_url = f"https://openmensa.org/api/v2/canteens/279/days/{today}/meals"
-response = requests.get(api_url)
+
+session = requests.Session()
+retry = Retry(connect=3, backoff_factor=0.5)
+adapter = HTTPAdapter(max_retries=retry)
+session.mount('http://', adapter)
+session.mount('https://', adapter)
+
+response = session.get(api_url)
 
 meal = ""
 if response.status_code == 200:
