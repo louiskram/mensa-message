@@ -13,6 +13,9 @@ CONFIG_FILE = "config.json"
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)-8s - %(message)s')
 
 def load_config() -> dict:
+    """
+    Loads the configuration from the config.json file.
+    """
     script_directory = os.path.dirname(os.path.abspath(__file__))
     full_path = os.path.join(script_directory, CONFIG_FILE)
     try:
@@ -28,6 +31,9 @@ def load_config() -> dict:
         raise
 
 def get_mensa_data(mensa_id: int) -> str:
+    """
+    Retrieves the meal data from the OpenMensa API.
+    """
     api_url = f"https://openmensa.org/api/v2/canteens/{mensa_id}/days/{TODAY}/meals"
     try:
         response = requests.get(api_url)
@@ -53,7 +59,7 @@ def main():
     signal = Signal(config)
 
     newest_post_metadata = media.get_newest_post_metadata(media.user_id)
-    newest_post_date = media.get_newest_post_date(newest_post_metadata)
+    newest_post_date = media.get_post_date(newest_post_metadata)
 
     if TODAY == newest_post_date:
         rating = media.get_rating(newest_post_metadata)

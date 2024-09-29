@@ -14,6 +14,9 @@ class Signal:
         logging.info("Signal class initialized")
 
     def send_message(self, message):
+        """
+        Sends a message to the configured Signal recipients.
+        """
         self.data['message'] = message
         data_json = json.dumps(self.data)
         try:
@@ -26,6 +29,9 @@ class Signal:
             raise
 
     def send_image(self, base64_picture, message=""):
+        """
+        Sends a message along with an image to the configured Signal recipients.
+        """
         self.data['message'] = message
         self.data['base64_attachments'] =  [base64_picture.decode()]
         data_json = json.dumps(self.data)
