@@ -1,99 +1,75 @@
 import base64
 import json
 import os
-from pathlib import Path
-import re
-import sys
-from instagrapi import Client
 import requests
+import logging
 from datetime import datetime
+from Signal import Signal
+from Media import Media
 
-from login_user import login_user
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+TODAY = datetime.today().strftime('%Y-%m-%d')
+CONFIG_FILE = "config.json"
 
-script_directory = os.path.dirname(os.path.abspath(__file__))
-filename = "config.json"
-full_path = os.path.join(script_directory, filename)
-with open(full_path, 'r') as file:
-    config = json.load(file)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)-8s - %(message)s')
 
-today = datetime.today().strftime('%Y-%m-%d')
+def load_config() -> dict:
+    script_directory = os.path.dirname(os.path.abspath(__file__))
+    full_path = os.path.join(script_directory, CONFIG_FILE)
+    try:
+        with open(full_path, 'r') as file:
+            config = json.load(file)
+        logging.info("Configuration loaded successfully")
+        return config
+    except FileNotFoundError:
+        logging.error(f"Config file not found: {full_path}")
+        raise
+    except json.JSONDecodeError:
+        logging.error(f"Invalid JSON in config file: {full_path}")
+        raise
 
-# get mensa data
-api_url = f"https://openmensa.org/api/v2/canteens/279/days/{today}/meals"
+def get_mensa_data(mensa_id: int) -> str:
+    api_url = f"https://openmensa.org/api/v2/canteens/{mensa_id}/days/{TODAY}/meals"
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()
+        data = response.json()
+        meal = data[-1]["name"] if data else ""
+        meal_formatted = meal.replace("\n", "")
+        logging.info(f"Retrieved meal data: {meal_formatted}")
+        return meal
+    except requests.RequestException as e:
+        logging.error(f"Error fetching mensa data: {e}")
+        raise
 
-session = requests.Session()
-retry = Retry(connect=3, backoff_factor=0.5)
-adapter = HTTPAdapter(max_retries=retry)
-session.mount('http://', adapter)
-session.mount('https://', adapter)
+def main():
+    config = load_config()
+    mensa_id = config["mensa_id"]
+    meal = get_mensa_data(mensa_id)
+    if not meal:
+        logging.warning("No meal found for today")
+        return
 
-response = session.get(api_url)
+    media = Media(config)
+    signal = Signal(config)
 
-meal = ""
-if response.status_code == 200:
-    response_json = response.json()
-    # if mensa is not open response_json is empty
-    # exit the script entirely if so
-    if not response_json:
-        sys.exit()
-    meal = response_json[-1]["name"]
+    newest_post_metadata = media.get_newest_post_metadata(media.user_id)
+    newest_post_date = media.get_newest_post_date(newest_post_metadata)
 
+    if TODAY == newest_post_date:
+        rating = media.get_rating(newest_post_metadata)
+        photo_path = media.get_photo(newest_post_metadata)
 
-# grab Instagram data
-cl = Client()
-login_user(cl, config['username'], config['password'])
+        with open(photo_path, "rb") as f:
+            data = f.read()
+            encoded = base64.b64encode(data)
+        message = f'{rating}: {meal}'
+        response = signal.send_image(encoded, message)
 
-user_id = 55356066885 # cl.user_id_from_username("mensa.out.of.10")
+        logging.info("Removing photo")
+        os.remove(photo_path)
+    else:
+        logging.info(f'Sending meal without rating and photo: {meal}')
+        response = signal.send_message(meal)
 
-# get metadata of newest post
-newest_post_metadata = cl.user_medias(user_id, amount=1)
-# return value is a list so convert it to string and strip open and closing brackets 
-newest_post_metadata = str(newest_post_metadata)[1:-1]
-
-# post only relevant if its from today
-newest_post_date = re.search(r"\d{4}, \d{1,2}, \d{1,2}", newest_post_metadata).group()
-# convert to correct format
-datetime_object = datetime.strptime(newest_post_date, "%Y, %m, %d") 
-newest_post_date = str(datetime_object.date())
-
-rating = ""
-if newest_post_date == today:
-    # rating can be a float
-    rating = re.search(r"(\d|\d(\.|,)\d+)\/10", newest_post_metadata).group()
-
-    # pk is the only number exactly 19 characters long
-    media_pk = re.search(r"\d{19}", newest_post_metadata).group()
-
-    # somehow the downloaded photo has .heic file extension. convert it to jpg.
-    photo_path = cl.photo_download(media_pk)
-    photo_path = Path(photo_path)
-    photo_path = photo_path.rename(Path(photo_path.parent, f"{photo_path.stem}.jpg"))
-
-# send to signal
-if today == newest_post_date:
-    with open(photo_path, "rb") as f:
-        data = f.read()
-        encoded = base64.b64encode(data)
-
-
-
-headers = {'Content-Type': 'application/json'}
-data = {
-    'number': config['send_phone_no'],
-    'recipients': [config['rec_group_id']],
-}
-
-if rating:
-    data['message'] = f'{rating}: {meal}'
-    data['base64_attachments'] = [encoded.decode()]
-else:
-    data['message'] = meal
-
-if meal: 
-    response = requests.post(f"{config['signal_api_ip']}/v2/send", headers=headers, data=json.dumps(data))
-    print(response)
-
-# delete image
-os.remove(photo_path)
+if __name__ == "__main__":
+    main()
