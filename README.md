@@ -9,4 +9,5 @@ Steps to setup:
 2. Install dependencies: `pip install -r requirements.txt`
 3. Install `signal-cli-rest-api`
 4. Configure `config.json`
-5. Run the script: `python main.py`
+5. Test the script: `python main.py`
+6. Add to crontab: `crontab -e` e.g. `0 11 * * * python /path/to/mensa-message/main.py`
