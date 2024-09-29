@@ -1,8 +1,13 @@
 {
-    "username": "ACCOUNT",
-    "password": "PASSWORD",
+    "username": "instagram account name",
+    "password": "instagram password",
     "send_phone_no": "the registered signal number, that sends the information",
-    "rec_group_id": "the ID (not internal ID) of the group",
+    "recipients": [
+        "phone number or ID (not internal ID) of a group chat",
+        "another phone number or ID (not internal ID) of a group chat",
+        "can also be a single phone number/group chat id if only one person should receive the message"
+    ],
     "signal_api_ip": "http://localhost:8080",
-    "mensa_id": "the ID of the mensa, e.g. 1778 for https://openmensa.org/c/1778"
+    "mensa_id": "the ID of the mensa, e.g. 1778 for https://openmensa.org/c/1778",
+    "session_file": "name of the session.json file, e.g. session.json"
 }

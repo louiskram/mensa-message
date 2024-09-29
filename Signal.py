@@ -9,7 +9,7 @@ class Signal:
         self.signal_endpoint = f"{self.config['signal_api_ip']}/v2/send"
         self.data = {
             'number': self.config['send_phone_no'],
-            'recipients': [self.config['rec_group_id']],
+            'recipients': self.config['recipients'],
         }
         logging.info("Signal class initialized")
 
